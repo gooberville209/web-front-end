@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Web3 DApp</title>
+</head>
+<body>
+    <h1>Simple Storage DApp</h1>
+    <div>
+        <label for="message">Message:</label>
+        <input type="text" id="message" placeholder="Enter your message">
+        <button onclick="setMessage()">Set Message</button>
+    </div>
+    <div>
+        <button onclick="getMessage()">Get Message</button>
+        <p id="displayMessage"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS';
+        const contractABI = [
+            {
+                "constant": false,
+                "inputs": [{"name": "newMessage", "type": "string"}],
+                "name": "setMessage",
+                "outputs": [],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [],
+                "name": "getMessage",
+                "outputs": [{"name": "", "type": "string"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        let web3;
+        let simpleStorage;
+
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.request({ method: "eth_requestAccounts" });
+                } catch (error) {
+                    console.error("User denied account access");
+                }
+            } else if (window.web3) {
+                web3 = new Web3(window.web3.currentProvider);
+            } else {
+                console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+            }
+
+            simpleStorage = new web3.eth.Contract(contractABI, contractAddress);
+        });
+
+        const setMessage = async () => {
+            const message = document.getElementById('message').value;
+            const accounts = await web3.eth.getAccounts();
+            await simpleStorage.methods.setMessage(message).send({ from: accounts[0] });
+            alert('Message set successfully!');
+        };
+
+        const getMessage = async () => {
+            const message = await simpleStorage.methods.getMessage().call();
+            document.getElementById('displayMessage').innerText = `Stored message: ${message}`;
+        };
+    </script>
+</body>
+</html>
